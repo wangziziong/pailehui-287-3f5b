@@ -569,6 +569,9 @@ try{ __savedCur = JSON.parse(sessionStorage.getItem('classAuctionCurV1')); }catc
 (function migrate(){
   if(!db.cdSeconds) db.cdSeconds = 20;
   if(db.tts === undefined) db.tts = true;
+  // 术语升级:存量数据里的"积分"标题/副标题自动转成"勋章"
+  db.title = String(db.title || '').replace(/积分/g, '勋章');
+  db.subtitle = String(db.subtitle || '').replace(/积分/g, '勋章');
   db.rules = (db.rules||[]).map(r=>{
     r = r.replace('三秒内无人加价', db.cdSeconds + '秒内无人加价');
     r = r.replace('每次加价不少于 5 勋章', '每次加价不低于 1 勋章');
