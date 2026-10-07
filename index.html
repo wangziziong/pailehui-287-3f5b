@@ -230,6 +230,7 @@
   <button data-tab="students">👥 学生积分</button>
   <button data-tab="records">📜 成交记录</button>
   <button data-tab="settings">⚙️ 标题与规则</button>
+  <button id="soundToggle" class="btn small gray" onclick="toggleSound()">🔊 声音</button>
   <button id="darkToggle" class="btn small gray" onclick="toggleDark()" style="margin-left:auto">🌙 暗色投影</button>
 </nav>
 
@@ -410,6 +411,7 @@
     <div class="form-row"><label>副标题</label><input type="text" id="setSubtitle" style="flex:1"></div>
     <div class="form-row"><label>倒计时秒数</label><input type="number" id="setCd" min="3" step="1" style="width:100px"> <span class="muted">秒（落锤前无人加价的等待时间，规则文案会同步更新）</span></div>
     <div class="form-row"><label>语音播报</label><input type="checkbox" id="setTts" style="width:18px; height:18px"> <span class="muted">落槌时语音朗读「XX分一次、两次、三次，成交」，全班都听得见（关闭则只保留提示音）</span></div>
+    <div class="muted" style="margin:-6px 0 10px 80px">需要临时安静？点页面右上角「🔊 声音」可一键静音全部提示音和语音播报</div>
   </div>
   <div class="card" style="margin-top:18px">
     <h3>拍卖规则（每行一条）</h3>
@@ -633,6 +635,7 @@ function toast(msg, ok){
 }
 function nowStr(){ const d=new Date(); return d.toTimeString().slice(0,5); }
 function beep(freq, dur){
+  if(soundMuted()) return;
   try{
     const ctx = beep._c || (beep._c = new (window.AudioContext||window.webkitAudioContext)());
     if(ctx.state === 'suspended'){ try{ ctx.resume(); }catch(e2){} } // 浏览器自动播放策略下先恢复音频上下文
@@ -645,7 +648,7 @@ function beep(freq, dur){
 }
 /* 语音播报：落槌时朗读「一次、两次、三次，成交」，用系统自带语音，无需联网 */
 function speak(text){
-  if(!db.tts || !('speechSynthesis' in window)) return;
+  if(!db.tts || soundMuted() || !('speechSynthesis' in window)) return;
   try{
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
@@ -1442,6 +1445,19 @@ window.addEventListener('storage', e=>{
     }
   }
 });
+
+/* ===== 一键静音（设备级偏好：提示音+语音全关，与拍卖数据无关） ===== */
+function soundMuted(){
+  try{ return localStorage.getItem('classAuctionSound') === '0'; }catch(e){ return false; }
+}
+function toggleSound(){
+  const muted = soundMuted();
+  try{ localStorage.setItem('classAuctionSound', muted ? '1' : '0'); }catch(e){}
+  updateSoundBtn();
+  toast(muted ? '🔊 声音已开启' : '🔇 已静音：提示音与语音播报全部关闭', !muted);
+}
+function updateSoundBtn(){ $('soundToggle').textContent = soundMuted() ? '🔇 静音中' : '🔊 声音'; }
+(function(){ updateSoundBtn(); })();
 
 /* ===== 暗色投影模式 ===== */
 function toggleDark(){
